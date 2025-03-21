@@ -1,0 +1,92 @@
+@startuml muduo_classes
+
+abstract noncopyable
+class TcpServer{
+    EventLoop* loop_;//the acceptor loop
+    std::unique_ptr<Acceptor> acceptor_;
+    std::shared_ptr<EventLoopThreadPool> threadPool_;
+    std::map<std::string,std::shared_ptr<TcpConnection> connections_;
+}
+noncopyable <|.. TcpServer
+TcpServer *-- EventLoop
+TcpServer *-- EventLoopThreadPool
+TcpServer o-- TcpConnection
+
+
+class EventLoop{
+    typedef std::vector<Channel*> ChannelList;
+    ChannelList activeChannels_;
+    Channel* currentActiveChannel_ = nullptr;
+    std::unique_ptr<Poller> poller;
+    std::unique_ptr<TimerQueue> timerQueue_;
+    std::unique_ptr<Channel> wakeupChannel_;
+}
+
+class TimerQueue
+class Channel
+
+noncopyable <|.. EventLoop
+EventLoop *-- Channel
+EventLoop *-- Poller
+EventLoop *-- TimerQueue
+Poller <-- EventLoop
+
+class Poller{
+    EventLoop* ownerLoop_;
+    ChannelMap channels_;
+}
+
+class PollPoller
+class EPollPoller
+Poller <|-- PollPoller
+Poller <|-- EPollPoller
+
+
+class Acceptor{
+  EventLoop* loop_;
+  Channel acceptChannel_;
+}
+
+noncopyable <|.. Acceptor
+Acceptor *-- Channel
+EventLoop <-- Acceptor
+TcpServer *-- Acceptor
+
+class EventLoopThreadPool{
+    EventLoop* baseLoop_;
+    std::vector<std::unique_ptr<EventLoopThread>> threads_;
+    std::vector<EventLoop*> loops_;
+}
+
+noncopyable <|.. EventLoopThreadPool
+EventLoop o-- EventLoopThreadPool
+
+class EventLoopThread{
+    EventLoop* loop_
+}
+noncopyable <|.. EventLoopThread
+EventLoopThread *-- EventLoop
+
+class TcpConnection{
+    EventLoop* loop_; 
+    std::unique_ptr<Socket> socket_;
+    std::unique_ptr<Channel> channel_;
+    const InetAddress localAddr_;
+    const InetAddress peerAddr_;
+    Buffer inputBuffer_;
+    Buffer outputBuffer_; // FIXME: use list<Buffer> as output buffer.
+}
+class enable_shared_from_this
+class Socket
+class InetAddress
+class Buffer
+
+TcpConnection *-- Socket
+TcpConnection *-- Channel
+TcpConnection *-- InetAddress
+TcpConnection *-- Buffer
+EventLoop <-- TcpConnection
+noncopyable <|.. TcpConnection
+enable_shared_from_this <|-- TcpConnection
+
+@enduml
